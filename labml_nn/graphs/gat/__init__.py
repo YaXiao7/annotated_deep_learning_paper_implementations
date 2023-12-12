@@ -12,17 +12,23 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 
 GATs work on graph data.
 A graph consists of nodes and edges connecting nodes.
-For example, in Cora dataset the nodes are research papers and the edges are citations that
-connect the papers.
+For example, in Cora dataset the nodes are research papers and the edges are citations that connect the papers.
 
 GAT uses masked self-attention, kind of similar to [transformers](../../transformers/mha.html).
+GAT使用掩码自注意力机制，与Transformer中类似
+
 GAT consists of graph attention layers stacked on top of each other.
+GAT由堆叠在一起的图注意力层组成
+
 Each graph attention layer gets node embeddings as inputs and outputs transformed embeddings.
+每一个注意力层将节点嵌入作为输入，输出转换后的嵌入表示
+
 The node embeddings pay attention to the embeddings of other nodes it's connected to.
+node的嵌入表示关注与他连接的nodes的嵌入表示
+
 The details of graph attention layers are included alongside the implementation.
 
-Here is [the training code](experiment.html) for training
-a two-layer GAT on Cora dataset.
+Here is [the training code](experiment.html) for training a two-layer GAT on Cora dataset.
 """
 
 import torch

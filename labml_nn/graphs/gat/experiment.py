@@ -29,13 +29,17 @@ class CoraDataset:
 
     Cora dataset is a dataset of research papers.
     For each paper we are given a binary feature vector that indicates the presence of words.
+    对于每一个paper都有一个二进制特征向量
     Each paper is classified into one of 7 classes.
+    每个paper被分为7类中的1类
     The dataset also has the citation network.
+    数据集也包括引用网络
 
     The papers are the nodes of the graph and the edges are the citations.
+    paper是图的节点，引用是图的边
 
-    The task is to classify the nodes to the 7 classes with feature vectors and
-    citation network as input.
+    The task is to classify the nodes to the 7 classes with feature vectors and citation network as input.
+    本任务是用特征向量和引用网络将node分为7类中的1类中
     """
     # Labels for each node
     labels: torch.Tensor
