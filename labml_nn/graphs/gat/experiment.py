@@ -80,12 +80,12 @@ class CoraDataset:
         with monit.section('Read citations file'):
             citations = np.genfromtxt(str(lab.get_data_path() / 'cora/cora.cites'), dtype=np.int32)
 
-        # Get the feature vectors
+        # Get the feature vectors 获取特征向量
         features = torch.tensor(np.array(content[:, 1:-1], dtype=np.float32))
-        # Normalize the feature vectors
+        # Normalize the feature vectors  正则化特征向量
         self.features = features / features.sum(dim=1, keepdim=True)
 
-        # Get the class names and assign an unique integer to each of them
+        # Get the class names and assign an unique integer to each of them  给每个类别分配一个数字
         self.classes = {s: i for i, s in enumerate(set(content[:, -1]))}
         # Get the labels as those integers
         self.labels = torch.tensor([self.classes[i] for i in content[:, -1]], dtype=torch.long)
@@ -96,9 +96,11 @@ class CoraDataset:
         ids_to_idx = {id_: i for i, id_ in enumerate(paper_ids)}
 
         # Empty adjacency matrix - an identity matrix
+        # 设置了一个对角矩阵，对角线上元素被设置为True，其余设置为false
         self.adj_mat = torch.eye(len(self.labels), dtype=torch.bool)
 
         # Mark the citations in the adjacency matrix
+        # 加载了引用信息
         if self.include_edges:
             for e in citations:
                 # The pair of paper indexes
@@ -127,6 +129,7 @@ class GAT(Module):
         """
         super().__init__()
 
+        # 两层GAT
         # First graph attention layer where we concatenate the heads
         self.layer1 = GraphAttentionLayer(in_features, n_hidden, n_heads, is_concat=True, dropout=dropout)
         # Activation function after first graph attention layer
@@ -136,7 +139,7 @@ class GAT(Module):
         # Dropout
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x: torch.Tensor, adj_mat: torch.Tensor):
+    def forward(self, x: torch.Tensor, adj_mat: torch.Tensor, get_attention: True = False):
         """
         * `x` is the features vectors of shape `[n_nodes, in_features]`
         * `adj_mat` is the adjacency matrix of the form
@@ -145,7 +148,7 @@ class GAT(Module):
         # Apply dropout to the input
         x = self.dropout(x)
         # First graph attention layer
-        x = self.layer1(x, adj_mat)
+        x = self.layer1(x, adj_mat, get_attention)
         # Activation function
         x = self.activation(x)
         # Dropout
@@ -169,7 +172,7 @@ class Configs(BaseConfigs):
     # Model
     model: GAT
     # Number of nodes to train on
-    training_samples: int = 500
+    training_samples: int = 1000
     # Number of features per node in the input
     in_features: int
     # Number of features in the first graph attention layer
@@ -179,13 +182,13 @@ class Configs(BaseConfigs):
     # Number of classes for classification
     n_classes: int
     # Dropout probability
-    dropout: float = 0.6
+    dropout: float = 0.7
     # Whether to include the citation network
     include_edges: bool = True
     # Dataset
     dataset: CoraDataset
     # Number of training iterations
-    epochs: int = 1_000
+    epochs: int = 1_0
     # Loss function
     loss_func = nn.CrossEntropyLoss()
     # Device to train on
@@ -217,8 +220,10 @@ class Configs(BaseConfigs):
         # Random indexes
         idx_rand = torch.randperm(len(labels))
         # Nodes for training
+        # 选择前self.training_samples的node作为训练集
         idx_train = idx_rand[:self.training_samples]
         # Nodes for validation
+        # 选择self.training_samples后的node作为验证集
         idx_valid = idx_rand[self.training_samples:]
 
         # Training loop
@@ -226,12 +231,17 @@ class Configs(BaseConfigs):
             # Set the model to training mode
             self.model.train()
             # Make all the gradients zero
+            # 将优化器中的梯度置零
             self.optimizer.zero_grad()
-            # Evaluate the model
-            output = self.model(features, edges_adj)
+            if epoch == 9:
+                output = self.model(features, edges_adj, True)
+            else:
+                # Evaluate the model
+                output = self.model(features, edges_adj)
             # Get the loss for training nodes
             loss = self.loss_func(output[idx_train], labels[idx_train])
             # Calculate gradients
+            # 反向传播计算梯度
             loss.backward()
             # Take optimization step
             self.optimizer.step()

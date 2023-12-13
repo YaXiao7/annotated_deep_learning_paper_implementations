@@ -56,12 +56,18 @@ class GraphAttentionLayer(Module):
                  dropout: float = 0.6,
                  leaky_relu_negative_slope: float = 0.2):
         """
-        * `in_features`, $F$, is the number of input features per node
-        * `out_features`, $F'$, is the number of output features per node
-        * `n_heads`, $K$, is the number of attention heads
+        * `in_features`, $F$, is the number of input features per node  
+        in_features   F：每个node输入特征的数量
+        * `out_features`, $F'$, is the number of output features per node  
+        out_features  F'：每个node输出特征的数量
+        * `n_heads`, $K$, is the number of attention heads  
+        n_heads       K:注意力头数
         * `is_concat` whether the multi-head results should be concatenated or averaged
+        is_concat :多头注意力机制的结果应该被组合和平均
         * `dropout` is the dropout probability
+        dropout   ：dropout 的概率
         * `leaky_relu_negative_slope` is the negative slope for leaky relu activation
+        激活函数的负斜率
         """
         super().__init__()
 
@@ -70,9 +76,9 @@ class GraphAttentionLayer(Module):
 
         # Calculate the number of dimensions per head
         if is_concat:
-            assert out_features % n_heads == 0
+            assert out_features % n_heads == 0   # 条件为True正常执行，否则报异常
             # If we are concatenating the multiple heads
-            self.n_hidden = out_features // n_heads
+            self.n_hidden = out_features // n_heads   # 将相除得到的整数值赋值给n_hidden，用于将out_features平均分给每个头
         else:
             # If we are averaging the multiple heads
             self.n_hidden = out_features
@@ -80,19 +86,21 @@ class GraphAttentionLayer(Module):
         # Linear layer for initial transformation;
         # i.e. to transform the node embeddings before self-attention
         self.linear = nn.Linear(in_features, self.n_hidden * n_heads, bias=False)
-        # Linear layer to compute attention score $e_{ij}$
+        # Linear layer to compute attention score $e_{ij}$  eij
         self.attn = nn.Linear(self.n_hidden * 2, 1, bias=False)
         # The activation for attention score $e_{ij}$
         self.activation = nn.LeakyReLU(negative_slope=leaky_relu_negative_slope)
         # Softmax to compute attention $\alpha_{ij}$
         self.softmax = nn.Softmax(dim=1)
-        # Dropout layer to be applied for attention
+        # Dropout layer to be applied for attention 随机失活
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, h: torch.Tensor, adj_mat: torch.Tensor):
         """
         * `h`, $\mathbf{h}$ is the input node embeddings of shape `[n_nodes, in_features]`.
+        h就是node的节点特征
         * `adj_mat` is the adjacency matrix of shape `[n_nodes, n_nodes, n_heads]`.
+        adj_mat是邻接矩阵
         We use shape `[n_nodes, n_nodes, 1]` since the adjacency is the same for each head.
 
         Adjacency matrix represent the edges (or connections) among nodes.
